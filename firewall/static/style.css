@@ -1,0 +1,67 @@
+body{
+    background-color: slategray;
+}
+h1{
+    font-size: 35px;
+    text-align: center;
+}
+#action-buttons,#block-ip,#block-port,#block-protocol,#block-country,#block-limitrate{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
+.actionbtn{
+    width: 70px;
+    height: 50px;
+    background-color: antiquewhite;
+    margin: 5px;
+}
+#ipblock,#portblock,#protocolblock{
+    margin: 10px;
+}
+#errmsg,#error{
+    color: red;
+    text-align: center;
+    font-size: larger;
+    align-items: center;
+    align-self: center;
+}
+#rules-content,#instatistics-content,#outstatistics-content{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
+#display-rules,#display-statistics-in,#display-statistics-out{
+    text-align: center;
+}
+#rules-content,#instatistics-content,#outstatistics-content{
+    text-align: center;
+    background-color: azure;
+    width: 50%;
+    margin: auto;
+    margin-bottom: 0;
+    margin-top: 0;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    height: 400px;
+
+}
+.ind-rule,.out-stat,.in-stat{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    
+    background-color: beige;
+    width: 100%;
+    padding: 10px;
+}
+#actualrule,#delete-rule,#actualoutstat,#actualinstat{
+    margin: 10px;
+}
+#logincontainer{
+    text-align: center;
+}

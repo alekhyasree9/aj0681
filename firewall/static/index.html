@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Welcome to the App</h1>
+    <button id="logout" style="display: none;">logout</button>
+    <div id="logincontainer">
+        <div>
+        <label>Username:</label>
+        <input type="text" maxlength="20" id="username">
+        </div>
+        <div>
+            <label>Password:</label>
+            <input type="password" maxlength="20" id="password">
+        </div>
+        <button id="login">Login</button>
+    </div>
+    <div id="authenticated" style="display: none;">
+    <div id="action-buttons">
+        <button id="getStatistics" class="actionbtn">Statistics</button>
+        <button id="blockipbtn" class="actionbtn">Block IP</button>
+        <button id="blockportbtn" class="actionbtn">Block Port</button>
+        <button id="blockprotocolbtn" class="actionbtn">Block Protocol</button>
+        <button id="blockcountrybtn" class="actionbtn">Block Country</button>
+        <button id="limitrequestsbtn" class="actionbtn">Limit Requests</button>
+    </div>
+    <div id="error" style="height: 70px;" >
+        <div style="display: none;width: 100%;" id="errmsg">
+        </div>
+    </div>
+    <div id="main-content">
+        <div id="block-ip" style="display: none;">
+            <div id="ipblock">
+                <label>IP Address:</label>
+                <input type="text" maxlength="15" id="ipaddress">
+                <select name="ipoption" id="iptype">
+                    <option value="incoming">Incoming</option>
+                    <option value="outgoing">Outgoing</option>
+                </select>
+                <button id="addip">Block</button>
+            </div>
+        </div>
+        <div id="block-port" style="display: none;">
+            <div id="portblock">
+                <label>Port Number:</label>
+                <select name="proto" id="protocol">
+                    <option value="tcp">TCP</option>
+                    <option value="udp">UDP</option>
+                    <option value="both">both</option>
+                </select>
+                <input type="number" maxlength="5" id="portnumber">
+                <select name="portoption" id="porttype">
+                    <option value="incoming">Incoming</option>
+                    <option value="outgoing">Outgoing</option>
+                </select>
+                <button id="addport">Block</button>
+            </div>
+        </div>
+        <div id="block-protocol" style="display: none;">
+            <div id="protocolblock">
+                <label>Protocol:</label>
+                    <input type="text" maxlength="15" id="protocols">
+                    <select name="protocoloption" id="protocoltype">
+                        <option value="incoming">Incoming</option>
+                        <option value="outgoing">Outgoing</option>
+                    </select>
+                <button id="addprotocol">Block</button>
+                <div>(protocols mentioned in the "/etc/protocols" file are only supported)</div>
+                <div>(For any other protocol select "Block Port" to block them)</div>
+            </div>
+        </div>
+        <div id="block-country" style="display: none;">
+            <div id="countryblock">
+                <label>Country Code:</label>
+                <input type="text" maxlength="2" id="country">
+                <select name="countryoption" id="countrytype">
+                    <option value="incoming">Incoming</option>
+                    <option value="outgoing">Outgoing</option>
+                </select>
+                <button id="addcountry">Block</button>
+            </div>
+        </div>
+        <div id="block-limitrate" style="display: none;">
+            <div id="limitrateblock">
+                <label>Limit Requests Per IP:</label>
+                <input type="text" maxlength="15" id="limitipaddress">
+                <label>Number of Requests:</label>
+                <input type="number" maxlength="4" id="limitnumber">
+                <select name="limitrates" id="limitrates">
+                    <option value="second">/second</option>
+                    <option value="min">/minute</option>
+                    <option value="hour">/hour</option>
+                </select>
+                <button id="addlimitrequests">Limit IP</button>
+            </div>
+        </div>
+    </div>
+    <div id="display-rules">
+        <div>
+        <p>Current Rules:
+        <button id="refresh-rules">Refresh</button>
+        </div>
+        <div id="rules-content">
+
+        </div>
+    </div>
+</div>
+    <script src="script.js"></script>
+</body>
+</html>

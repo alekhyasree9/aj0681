@@ -1,0 +1,707 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>main: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">example/main/main.go (29.2%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "fmt"
+        "net"
+        "os"
+        "os/exec"
+        "regexp"
+        "strings"
+        "time"
+
+        "github.com/coreos/go-iptables/iptables"
+        "github.com/dgrijalva/jwt-go"
+        "github.com/labstack/echo"
+        "github.com/labstack/echo/middleware"
+)
+
+var ipt *iptables.IPTables
+var syslogPath = "/var/log/syslog"
+var JWTSecret = []byte("somesecretkey####1!09803223@!2")
+type BlockedLog struct{
+        Timestamp time.Time `json:"timestamp"`
+        SourceIP string `json:"source_ip"`
+        DestinationIP string `json:"destination_ip"`
+        BlockedReason string `json:"blocked_reason"`
+}
+
+func main()<span class="cov0" title="0">{
+        var err error
+        //create iptable
+        ipt,err = iptables.New()
+        if err != nil</span><span class="cov0" title="0">{
+                fmt.Printf("Error initializing iptables: %v\n",err)
+                os.Exit(1)
+        }</span>
+        //create echo
+        <span class="cov0" title="0">e:=echo.New()
+        e.Use(middleware.Static("static"))
+        e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+                AllowOrigins: []string{"*"},
+        }))
+        // e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+        //         SigningKey: JWTSecret,
+        // }))
+        e.GET("/",func(c echo.Context) error </span><span class="cov0" title="0">{
+                return c.File("static/index.html")
+        }</span>)
+        <span class="cov0" title="0">e.POST("/login",login)
+        authenticatedGroup := e.Group("")
+        authenticatedGroup.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+                SigningKey: JWTSecret,
+        }))
+        e.GET("/statistics",func(c echo.Context) error </span><span class="cov0" title="0">{
+                return c.File("static/statistics.html")
+        }</span>)
+        <span class="cov0" title="0">authenticatedGroup.POST("/block/ip",blockIP)
+        authenticatedGroup.POST("/unblock/ip",unblockIP)
+        authenticatedGroup.POST("/block/port",blockPort)
+        authenticatedGroup.POST("/unblock/port",unblockPort)
+        authenticatedGroup.POST("/block/protocol",blockProtocol)
+        authenticatedGroup.POST("/unblock/protocol",unblockProtocol)
+        authenticatedGroup.POST("/block/country",blockCountry)
+        authenticatedGroup.POST("/unblock/country",unblockCountry)
+        authenticatedGroup.POST("/block/limitrate",blockLimitRate)
+        authenticatedGroup.POST("/block/unblocklimitrate",unblockLimitRate)
+        authenticatedGroup.GET("/logs",getLogs)
+        authenticatedGroup.GET("/rules",getRules)
+        authenticatedGroup.GET("/getStatisticsout",getStatisticsout)
+        authenticatedGroup.GET("/getStatisticsin",getStatisticsin)
+        err1 := e.Start(":1323")
+        if(err1!=nil)</span><span class="cov0" title="0">{
+                fmt.Sprintln("Unable to start the server")
+        }</span>
+}
+func getStatisticsout(c echo.Context) error<span class="cov8" title="1">{
+        table:="filter"
+        cmd:=exec.Command("iptables","-t",table,"-nvxL","OUTPUT")
+        output,err:=cmd.CombinedOutput()
+        if err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Unable to fetch statistics"})
+        }</span>
+        <span class="cov8" title="1">lines:=strings.Split(string(output),"\n")
+        count:=1
+        var s []string
+        regex:=regexp.MustCompile(`\s+`)
+        for _,line:=range lines</span><span class="cov8" title="1">{
+                if(count&lt;3)</span><span class="cov8" title="1">{
+                        count++
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">line = strings.TrimSpace(line)
+                if line!=""</span><span class="cov0" title="0">{
+                fields:=regex.Split(line,-1)
+                s=append(s,fmt.Sprintf("Rule %d: Packets Blocked: %s, Bytes Blocked: %s",count-2,fields[0],fields[1]))
+                }</span>
+                <span class="cov8" title="1">count++</span>
+        }
+        <span class="cov8" title="1">return c.JSON(200,s)</span>
+}
+func getStatisticsin(c echo.Context) error<span class="cov8" title="1">{
+        table:="filter"
+        cmd:=exec.Command("iptables","-t",table,"-nvxL","INPUT")
+        output,err:=cmd.CombinedOutput()
+        if err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Unable to fetch statistics"})
+        }</span>
+        <span class="cov8" title="1">lines:=strings.Split(string(output),"\n")
+        count:=1
+        var s []string
+        regex:=regexp.MustCompile(`\s+`)
+        for _,line:=range lines</span><span class="cov8" title="1">{
+                if(count&lt;3)</span><span class="cov8" title="1">{
+                        count++
+                        continue</span>
+                }
+
+                <span class="cov8" title="1">line = strings.TrimSpace(line)
+                if line!=""</span><span class="cov0" title="0">{
+                fields:=regex.Split(line,-1)
+                s=append(s,fmt.Sprintf("Rule %d: Packets Blocked: %s, Bytes Blocked: %s",count-2,fields[0],fields[1]))
+                }</span>
+                <span class="cov8" title="1">count++</span>
+        }
+        <span class="cov8" title="1">return c.JSON(200,s)</span>
+}
+func login(c echo.Context) error<span class="cov8" title="1">{
+        type Login struct{
+                Username string `json:"username"`
+                Password string `json:"password"`
+        }
+        req := new(Login)
+        if err:=c.Bind(req);err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        <span class="cov8" title="1">if req.Username == "admin" &amp;&amp; req.Password=="admin1"</span><span class="cov8" title="1">{
+                token:=jwt.New(jwt.SigningMethodHS256)
+                claims:=token.Claims.(jwt.MapClaims)
+                claims["username"]=req.Username
+                claims["exp"]=time.Now().Add(time.Hour*24).Unix()
+                tokenString,err:=token.SignedString(JWTSecret)
+                if err!=nil</span><span class="cov0" title="0">{
+                        return c.JSON(500,map[string]string{"error":"Failed to validate User"})
+                }</span>
+                <span class="cov8" title="1">return c.JSON(200,map[string]string{"token":tokenString})</span>
+        }else<span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+}
+func blockLimitRate(c echo.Context) error<span class="cov8" title="1">{
+        type BlockIP struct{
+                IP string `json:"ip"`
+                NUMBER int `json:"number"`
+                RATE string `json:"rate"`
+        }
+        req:= new(BlockIP)
+        if err:=c.Bind(req); err!=nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        //check if ip address is valid
+        <span class="cov8" title="1">ip:=net.ParseIP(req.IP)
+        if ip==nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid IP address"})
+        }</span>
+        <span class="cov8" title="1">if req.RATE!="second" &amp;&amp; req.RATE!="min" &amp;&amp; req.RATE!="hour"</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid time. It can be second, minute or hour"})
+        }</span>
+        //add new rule to block that IP
+        <span class="cov0" title="0">if req.RATE=="second"</span><span class="cov0" title="0">{
+        err:=ipt.AppendUnique("filter","INPUT","-s",req.IP,"-m","state","--state","NEW","-m","limit","--limit",fmt.Sprintf("%d/second",req.NUMBER),"--limit-burst","100","-j","ACCEPT")
+        if err !=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.RATE=="min"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","INPUT","-s",req.IP,"-m","state","--state","NEW","-m","limit","--limit",fmt.Sprintf("%d/min",req.NUMBER),"--limit-burst","100","-j","ACCEPT")
+                if err !=nil</span><span class="cov0" title="0">{
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        <span class="cov0" title="0">if req.RATE=="hour"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","INPUT","-s",req.IP,"-m","state","--state","NEW","-m","limit","--limit",fmt.Sprintf("%d/hour",req.NUMBER),"--limit-burst","100","-j","ACCEPT")
+                if err !=nil</span><span class="cov0" title="0">{
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"ip blocking success"})</span>
+}
+func unblockLimitRate(c echo.Context) error<span class="cov8" title="1">{
+        type BlockIP struct{
+                IP string `json:"ip"`
+                NUMBER int `json:"number"`
+                RATE string `json:"rate"`
+        }
+        req:= new(BlockIP)
+        if err:=c.Bind(req); err!=nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        //check if ip address is valid
+        <span class="cov8" title="1">ip:=net.ParseIP(req.IP)
+        if ip==nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid IP address"})
+        }</span>
+        <span class="cov8" title="1">if req.RATE!="second" &amp;&amp; req.RATE!="min" &amp;&amp; req.RATE!="hour"</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid time. It can be second, minute or hour"})
+        }</span>
+        //add new rule to block that IP
+        <span class="cov0" title="0">if req.RATE=="second"</span><span class="cov0" title="0">{
+        err:=ipt.Delete("filter","INPUT","-s",req.IP,"-m","state","--state","NEW","-m","limit","--limit",fmt.Sprintf("%d/second",req.NUMBER),"--limit-burst","100","-j","ACCEPT")
+        if err !=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.RATE=="min"</span><span class="cov0" title="0">{
+                err:=ipt.Delete("filter","INPUT","-s",req.IP,"-m","state","--state","NEW","-m","limit","--limit",fmt.Sprintf("%d/min",req.NUMBER),"--limit-burst","100","-j","ACCEPT")
+                if err !=nil</span><span class="cov0" title="0">{
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        <span class="cov0" title="0">if req.RATE=="hour"</span><span class="cov0" title="0">{
+                err:=ipt.Delete("filter","INPUT","-s",req.IP,"-m","state","--state","NEW","-m","limit","--limit",fmt.Sprintf("%d/hour",req.NUMBER),"--limit-burst","100","-j","ACCEPT")
+                if err !=nil</span><span class="cov0" title="0">{
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"ip blocking success"})</span>
+}
+func getRules(c echo.Context) error<span class="cov0" title="0">{
+        table:="filter"
+        rules1,err:=ipt.List(table,"INPUT")
+        if err!=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Unable to get the current rules list"})
+        }</span>
+        <span class="cov0" title="0">rules2,err:=ipt.List(table,"OUTPUT")
+        if err!=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Unable to get the current rules list"})
+        }</span>
+        <span class="cov0" title="0">rules:=append(rules1,rules2...)
+        return c.JSON(200,map[string]interface{}{
+                "table":table,
+                "chain":"INPUT",
+                "rules":rules,
+        })</span>
+}
+func blockIP(c echo.Context) error<span class="cov8" title="1">{
+        type BlockIP struct{
+                IP string `json:"ip"`
+                TYPE string `json:"type"`
+        }
+        req:= new(BlockIP)
+        if err:=c.Bind(req); err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        //check if ip address is valid
+        <span class="cov8" title="1">ip:=net.ParseIP(req.IP)
+        if ip==nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid IP address"})
+        }</span>
+        <span class="cov8" title="1">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">fmt.Println(req.TYPE)
+        //add new rule to block that IP
+        if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+        err:=ipt.AppendUnique("filter","INPUT","-s",req.IP,"-j","DROP")
+        if err !=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","OUTPUT","-s",req.IP,"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+                }
+        
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"ip blocking success"})</span>
+}
+func unblockIP(c echo.Context) error<span class="cov8" title="1">{
+        type UNBlockIP struct{
+                IP string `json:"ip"`
+                TYPE string `json:"type"`
+        }
+        req:= new(UNBlockIP)
+        if err:=c.Bind(req); err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        //check if ip address is valid
+        <span class="cov8" title="1">ip:=net.ParseIP(req.IP)
+        if ip==nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid IP address"})
+        }</span>
+        <span class="cov8" title="1">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+        //delete the rule
+        err:=ipt.Delete("filter","INPUT","-s",req.IP,"-j","DROP")
+        if err !=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                //delete the rule
+                err:=ipt.Delete("filter","OUTPUT","-s",req.IP,"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+                }</span>
+                }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"ip unblocking success"})</span>
+}
+
+func blockPort(c echo.Context) error<span class="cov8" title="1">{
+        type BlockPort struct{
+                Port int `json:"port"`
+                Protocol string `json:"protocol"`
+                TYPE string `json:"type"`
+        }
+        req:= new(BlockPort)
+        if err:=c.Bind(req); err!=nil</span><span class="cov8" title="1">{
+                fmt.Println(err)
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">if req.Protocol!="tcp" &amp;&amp; req.Protocol!="udp" &amp;&amp; req.Protocol!="both"</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Protocol. It can be tcp,udp or both"})
+        }</span>
+        <span class="cov0" title="0">if(req.Protocol=="tcp")</span><span class="cov0" title="0">{
+                if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","INPUT","-p","tcp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","OUTPUT","-p","tcp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        }else<span class="cov0" title="0"> if (req.Protocol=="udp")</span><span class="cov0" title="0">{
+                if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","INPUT","-p","udp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+        if err !=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","OUTPUT","-p","udp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+        if err !=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        }else<span class="cov0" title="0"> if(req.Protocol=="both")</span><span class="cov0" title="0">{
+                if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","INPUT","-p","tcp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+                <span class="cov0" title="0">err=ipt.AppendUnique("filter","INPUT","-p","udp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","OUTPUT","-p","tcp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+                <span class="cov0" title="0">err=ipt.AppendUnique("filter","OUTPUT","-p","udp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+        }
+        }else<span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule, Unknown protocol"})
+        }</span>
+        //add the rule to block port
+        
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"port blocking success"})</span>
+}
+
+func unblockPort(c echo.Context) error<span class="cov8" title="1">{
+        type BlockPort1 struct{
+                Port int `json:"port"`
+                Protocol string `json:"protocol"`
+                TYPE string `json:"type"`
+        }
+        req:= new(BlockPort1)
+        if err:=c.Bind(req); err!=nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">if(req.Protocol=="tcp")</span><span class="cov0" title="0">{
+                if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+        //add the rule to block port
+        err:=ipt.Delete("filter","INPUT","-p","tcp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+        if err !=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+        }</span>
+}
+<span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+        //add the rule to block port
+        err:=ipt.Delete("filter","OUTPUT","-p","tcp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+        if err !=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+        }</span>
+}
+        }
+        <span class="cov0" title="0">if(req.Protocol=="udp")</span><span class="cov0" title="0">{
+                if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+                //add the rule to block port
+                err:=ipt.Delete("filter","INPUT","-p","udp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+                }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                //add the rule to block port
+                err:=ipt.Delete("filter","OUTPUT","-p","udp","--dport",fmt.Sprintf("%d",req.Port),"-j","DROP")
+                if err !=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+                }</span>
+        }
+                }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"port unblocking success"})</span>
+}
+
+func blockProtocol(c echo.Context) error<span class="cov8" title="1">{
+        type BlockProtocol struct{
+                Protocol string `json:"protocol"`
+                TYPE string `json:"type"`
+        }
+        req:=new(BlockProtocol)
+        if err:=c.Bind(req);err!=nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE == "incoming"</span><span class="cov0" title="0">{
+        err:=ipt.AppendUnique("filter","INPUT","-p",req.Protocol,"-j","DROP")
+        if err!=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE == "outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","OUTPUT","-p",req.Protocol,"-j","DROP")
+                if err!=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+                }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"protocol blocking success"})</span>
+}
+func unblockProtocol(c echo.Context) error<span class="cov8" title="1">{
+        type UNBlockProtocol struct{
+                Protocol string `json:"protocol"`
+                TYPE string `json:"type"`
+        }
+        req:=new(UNBlockProtocol)
+        if err:=c.Bind(req);err!=nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+                err:=ipt.Delete("filter","INPUT","-p",req.Protocol,"-j","DROP")
+        if err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.Delete("filter","OUTPUT","-p",req.Protocol,"-j","DROP")
+        if err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to delete the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"protocol unblocking success"})</span>
+}
+func blockCountry(c echo.Context) error<span class="cov8" title="1">{
+        type BlockCountry struct{
+                Country string `json:"country"`
+                TYPE string `json:"type"`
+        }
+        req:=new(BlockCountry)
+        if err:=c.Bind(req);err!=nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+        err:=ipt.AppendUnique("filter","INPUT","-m","geoip","--src-cc",req.Country,"-j","DROP")
+        if err!=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.AppendUnique("filter","OUTPUT","-m","geoip","--src-cc",req.Country,"-j","DROP")
+                if err!=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+                }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"country blocking success"})</span>
+}
+func unblockCountry(c echo.Context) error<span class="cov8" title="1">{
+        type BlockCountry struct{
+                Country string `json:"country"`
+                TYPE string `json:"type"`
+        }
+        req:=new(BlockCountry)
+        if err:=c.Bind(req);err!=nil</span><span class="cov8" title="1">{
+                return c.JSON(400,map[string]string{"error":"Invalid Request"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE!="incoming" &amp;&amp; req.TYPE!="outgoing"</span><span class="cov0" title="0">{
+                return c.JSON(400,map[string]string{"error":"Invalid Blocking Type. It can be incoming or outgoing"})
+        }</span>
+        <span class="cov0" title="0">if req.TYPE=="incoming"</span><span class="cov0" title="0">{
+        err:=ipt.Delete("filter","INPUT","-m","geoip","--src-cc",req.Country,"-j","DROP")
+        if err!=nil</span><span class="cov0" title="0">{
+                fmt.Println(err)
+                return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+        }</span>
+        }
+        <span class="cov0" title="0">if req.TYPE=="outgoing"</span><span class="cov0" title="0">{
+                err:=ipt.Delete("filter","OUTPUT","-m","geoip","--src-cc",req.Country,"-j","DROP")
+                if err!=nil</span><span class="cov0" title="0">{
+                        fmt.Println(err)
+                        return c.JSON(500,map[string]string{"error":"Failed to add the rule"})
+                }</span>
+                }
+        <span class="cov0" title="0">return c.JSON(200,map[string]string{"message":"country blocking success"})</span>
+}
+func getLogs(c echo.Context) error<span class="cov0" title="0">{
+        blockedTraffic,err :=getBlockedTraffic()
+        if err!=nil</span><span class="cov0" title="0">{
+                return c.JSON(500,map[string]string{"error":"Failed to retrieve the logs"})
+        }</span>
+        <span class="cov0" title="0">return c.JSON(200,blockedTraffic)</span>
+}
+func getBlockedTraffic() ([]BlockedLog,error)<span class="cov0" title="0">{
+        cmd:=exec.Command("grep","DROP:",syslogPath)
+        output,err:=cmd.CombinedOutput()
+        if err!=nil</span><span class="cov0" title="0">{
+                fmt.Printf("Error getting the logs: %v\n",err)
+                return nil,err
+        }</span>
+        <span class="cov0" title="0">lines:=strings.Split(string(output),"\n")
+        var blockedTraffic []BlockedLog
+        for _,line:=range lines</span><span class="cov0" title="0">{
+                fmt.Println(line)
+                logEntry,err:=parseLogEntry(line)
+                if err !=nil</span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">blockedTraffic=append(blockedTraffic, logEntry)</span>
+        }
+        <span class="cov0" title="0">return blockedTraffic,nil</span>
+}
+//TODO
+func parseLogEntry(logLine string)(BlockedLog,error)<span class="cov0" title="0">{
+        fields:= strings.Fields(logLine)
+        if(len(fields)&lt;4)</span><span class="cov0" title="0">{
+                return BlockedLog{},nil
+        }</span>
+        <span class="cov0" title="0">timestamps := fmt.Sprintf("%s %s %s",fields[0],fields[1],fields[2])
+        timestamp,err:=time.Parse("Jan 2 15:14:05",timestamps)
+        if err!=nil</span><span class="cov0" title="0">{
+                return BlockedLog{},nil
+        }</span>
+        <span class="cov0" title="0">sourceIP:=fields[3]
+        destinationIP:=fields[4]
+        blockedReason:="Blocked by iptables rule"
+        logEntry:=BlockedLog{
+                Timestamp: timestamp,
+                SourceIP: sourceIP,
+                DestinationIP: destinationIP,
+                BlockedReason: blockedReason,
+        }
+        return logEntry,nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
